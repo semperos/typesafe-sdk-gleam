@@ -28,9 +28,10 @@ pub fn main() {
 }
 ```
 
-The SDK logs through the Erlang logger. Call `logging.configure()` and
-`logging.set_level(logging.Debug)` from `typesafe/logging` to see
-request summaries and bodies.
+The SDK logs through the Erlang logger. Retries, timeouts, and connection
+errors log at `warning`, so they show at the Erlang default level. Call
+`logging.configure()` and `logging.set_level(logging.Debug)` from
+`typesafe/logging` to see request summaries and bodies.
 
 ## Development
 

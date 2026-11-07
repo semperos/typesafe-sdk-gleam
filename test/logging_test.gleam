@@ -1,9 +1,9 @@
 import gleam/list
 import gleam/string
-import helpers.{always, json_response, mock}
-import typesafe.{TransportFailed}
+import helpers.{always, json_response, mock, sequence}
+import typesafe.{TransportFailed, TransportTimeout}
 import typesafe/content.{String}
-import typesafe/logging.{Debug, Info, Notice}
+import typesafe/logging.{Debug, Info, Notice, Warning}
 import typesafe/question
 import typesafe/retry
 
@@ -74,7 +74,7 @@ pub fn logs_error_responses_with_their_body_at_debug_test() {
 }
 
 pub fn logs_connection_failures_with_the_cause_test() {
-  let assert [#(Info, line)] =
+  let assert [#(Warning, line)] =
     logs_at(Info, Error(TransportFailed("econnrefused")))
   assert string.contains(line, "connection error after ")
   assert string.ends_with(line, ": econnrefused")
@@ -88,4 +88,41 @@ pub fn redacts_short_secrets_without_a_tail_test() {
     helpers.capture_logs(Debug, fn() { typesafe.list_models(client) })
   let assert [#(Debug, outgoing), ..] = logs
   assert string.contains(outgoing, "#(\"authorization\", \"Bearer ***\")")
+}
+
+pub fn logs_timeouts_at_warning_test() {
+  let assert [#(Warning, line)] = logs_at(Info, Error(TransportTimeout))
+  assert string.contains(line, "timed out after ")
+}
+
+pub fn logs_retries_at_warning_above_the_erlang_default_level_test() {
+  let #(client, _) =
+    typesafe.new(key)
+    |> typesafe.with_retry(
+      retry.RetryPolicy(
+        ..retry.default_policy(),
+        backoff_initial_ms: 1,
+        backoff_jitter: 0.0,
+      ),
+    )
+    |> mock(
+      sequence([
+        Ok(json_response(503, "{}")),
+        Ok(json_response(200, ok_body)),
+      ]),
+    )
+  let #(_, logs) =
+    helpers.capture_logs(Notice, fn() {
+      typesafe.system_one(
+        client,
+        typesafe.system_one_request(String("charged twice"), [
+          #("q", question.noul(String("Billing?"))),
+        ]),
+      )
+    })
+  let assert [#(Warning, line)] = logs
+  assert string.ends_with(
+    without_number(line),
+    "POST /v1/systemone retrying in 1ms (retry 1/2) after 503",
+  )
 }

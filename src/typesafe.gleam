@@ -37,7 +37,7 @@ import typesafe/error.{
   type Error, ApiError, ConnectionError, InvalidConfig, InvalidRequest,
   TimeoutError, UnexpectedResponse,
 }
-import typesafe/logging.{type LogLevel, Debug, Info}
+import typesafe/logging.{type LogLevel, Debug, Info, Warning}
 import typesafe/question.{type Answer, type Question}
 import typesafe/retry.{type RetryPolicy}
 
@@ -469,7 +469,7 @@ fn send_attempt(
   let retry = fn(reason, headers) {
     let delay =
       retry.delay_ms(attempt, headers, policy, float.random(), system_time_ms())
-    log_lazy(Info, fn() {
+    log_lazy(Warning, fn() {
       tag
       <> " retrying in "
       <> int.to_string(delay)
@@ -485,7 +485,7 @@ fn send_attempt(
   }
   case client.transport(http_request, client.timeout_ms) {
     Error(TransportTimeout) -> {
-      log_lazy(Info, fn() { tag <> " timed out after " <> elapsed() })
+      log_lazy(Warning, fn() { tag <> " timed out after " <> elapsed() })
       let error = TimeoutError(client.timeout_ms)
       case retries_left > 0 && policy.retry_timeouts {
         True -> retry("timeout", [])
@@ -493,7 +493,7 @@ fn send_attempt(
       }
     }
     Error(TransportFailed(message)) -> {
-      log_lazy(Info, fn() {
+      log_lazy(Warning, fn() {
         tag <> " connection error after " <> elapsed() <> ": " <> message
       })
       let error = ConnectionError("Connection error: " <> message)
@@ -549,9 +549,10 @@ fn send_attempt(
   }
 }
 
-/// Logs go to the Erlang logger, whose level decides what is output. `Info`
-/// logs one summary line per attempt; `Debug` adds request headers, with
-/// credentials redacted, and bodies, unredacted.
+/// Logs go to the Erlang logger, whose level decides what is output. Retries,
+/// timeouts, and connection errors log at `Warning`, so the Erlang default
+/// level shows them. `Info` adds one summary line per response. `Debug` adds
+/// request headers, with credentials redacted, and bodies, unredacted.
 fn log_lazy(level: LogLevel, message: fn() -> String) -> Nil {
   case logging.allows(level) {
     True -> logging.log(level, "[typesafe-sdk] " <> message())
