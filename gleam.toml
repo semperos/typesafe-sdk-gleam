@@ -3,8 +3,6 @@ version = "1.0.0"
 
 description = "An unofficial Gleam client for the TypeSafe AI (Jev) API"
 licences = ["MIT", "Apache-2.0"]
-repository = { type = "github", user = "semperos", repo = "typesafe-sdk-gleam" }
-links = [{ title = "TypeSafe", href = "https://typesafe.ai" }]
 target = "erlang"
 
 [dependencies]

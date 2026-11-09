@@ -1,14 +1,18 @@
 # typesafe
 
-[![Package Version](https://img.shields.io/hexpm/v/typesafe)](https://hex.pm/packages/typesafe)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/typesafe/)
-
 An unofficial Gleam client for the [TypeSafe AI](https://typesafe.ai) API, for
 the Erlang target. TypeSafe doesn't maintain or endorse this package.
 
-```sh
-gleam add typesafe@1
+This package isn't published to Hex. Add it as a Git dependency in your
+`gleam.toml`, pinned to a commit:
+
+```toml
+[dependencies]
+typesafe = { git = "https://github.com/semperos/typesafe-sdk-gleam", ref = "<commit-sha>" }
 ```
+
+Then run `gleam deps download`. Run `gleam docs build` in a clone of this
+repository to generate the API docs locally.
 
 ```gleam
 import gleam/dict
