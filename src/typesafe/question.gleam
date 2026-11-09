@@ -1,6 +1,7 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic/decode
 import gleam/int
+import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option}
 import gleam/result
@@ -137,6 +138,46 @@ fn wire(
   rest: List(#(String, Content)),
 ) -> Content {
   Object([#("type", String(kind)), #("instructions", instructions), ..rest])
+}
+
+/// An answer in the API's wire format, which `answer_decoder` reads back.
+pub fn answer_to_json(answer: Answer) -> Json {
+  case answer {
+    NoulAnswer(noul:) ->
+      json.object([#("type", json.string("noul")), #("noul", json.float(noul))])
+    ChoiceAnswer(choice:, confidence:, probabilities:) ->
+      json.object([
+        #("type", json.string("choice")),
+        #("choice", json.string(choice)),
+        #("confidence", json.float(confidence)),
+        #(
+          "probabilities",
+          json.dict(probabilities, fn(label) { label }, json.float),
+        ),
+      ])
+    ScoreAnswer(score:, confidence:, legend:, probabilities:) ->
+      json.object([
+        #("type", json.string("score")),
+        #("score", json.float(score)),
+        #("confidence", json.float(confidence)),
+        #("legend", json.dict(legend, int.to_string, content.to_json)),
+        #("probabilities", json.dict(probabilities, int.to_string, json.float)),
+      ])
+    BoxAnswer(box:, confidence:) ->
+      json.object([
+        #("type", json.string("box")),
+        #(
+          "box",
+          json.object([
+            #("top", json.float(box.top)),
+            #("bottom", json.float(box.bottom)),
+            #("left", json.float(box.left)),
+            #("right", json.float(box.right)),
+          ]),
+        ),
+        #("confidence", json.nullable(confidence, json.float)),
+      ])
+  }
 }
 
 /// Decode an answer by its `type` field.

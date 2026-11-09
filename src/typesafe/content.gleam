@@ -103,6 +103,12 @@ fn swap(pair: #(a, b)) -> #(b, a) {
   #(pair.1, pair.0)
 }
 
+/// `content` as JSON, writing each image as its reference. Meant for content
+/// without images, such as an answer's legend.
+pub fn to_json(content: Content) -> Json {
+  encode(content, dict.new(), []).0
+}
+
 /// `content` as JSON, with unnamed images prepended to `found` once each.
 fn encode(
   content: Content,

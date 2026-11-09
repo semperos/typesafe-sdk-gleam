@@ -1,6 +1,7 @@
 -module(helpers_ffi).
 -export([new_ref/0, append/2, values/1, zstd_decompress/1, split/2, split_once/2,
-         put_env/2, unset_env/1, capture_logs/2, log/2, remove_default_handler/0]).
+         put_env/2, unset_env/1, capture_logs/2, log/2, remove_default_handler/0,
+         package_version/0]).
 
 new_ref() -> make_ref().
 
@@ -51,3 +52,8 @@ log(#{level := Level, msg := {string, Message}}, #{config := Ref}) ->
 remove_default_handler() ->
     logger:remove_handler(default),
     nil.
+
+package_version() ->
+    _ = application:load(typesafe),
+    {ok, Vsn} = application:get_key(typesafe, vsn),
+    list_to_binary(Vsn).

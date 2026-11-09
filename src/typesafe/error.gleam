@@ -23,8 +23,8 @@ pub type Error {
   TimeoutError(timeout_ms: Int)
   /// The request was rejected before sending because it is malformed.
   InvalidRequest(message: String)
-  /// The client is misconfigured: a missing API key, an invalid setting, or
-  /// an unsupported option for this runtime.
+  /// The client is misconfigured: an invalid setting or an unsupported
+  /// option for this runtime.
   InvalidConfig(message: String)
   /// A 2xx response didn't have the shape the SDK expects.
   UnexpectedResponse(message: String, body: String)

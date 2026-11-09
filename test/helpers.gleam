@@ -135,3 +135,7 @@ pub fn put_env(name: String, value: String) -> Nil
 
 @external(erlang, "helpers_ffi", "unset_env")
 pub fn unset_env(name: String) -> Nil
+
+/// The version in `gleam.toml`, as the compiled application reports it.
+@external(erlang, "helpers_ffi", "package_version")
+pub fn package_version() -> String

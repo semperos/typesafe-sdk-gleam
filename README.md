@@ -3,7 +3,8 @@
 [![Package Version](https://img.shields.io/hexpm/v/typesafe)](https://hex.pm/packages/typesafe)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/typesafe/)
 
-A Gleam client for the TypeSafe AI API, for the Erlang target.
+An unofficial Gleam client for the [TypeSafe AI](https://typesafe.ai) API, for
+the Erlang target. TypeSafe doesn't maintain or endorse this package.
 
 ```sh
 gleam add typesafe@1
@@ -73,14 +74,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-`src/typesafe/logging.gleam` and
+`src/typesafe/logging.gleam`, `src/typesafe/internal/log.gleam`, and
 `src/typesafe_logging_ffi.erl` are adapted from
 [lpil/logging](https://github.com/lpil/logging) v1.5.0 (commit `5499800`),
 copyright Louis Pilfold, licensed under the
-[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Changes:
+Apache License 2.0, whose text is in `LICENSE-APACHE`. Changes:
 the Erlang module is renamed so it can't clash with the original package,
-`logging.allows` is added, and the formatter handles `{Format, Args}`
-messages and non-list reports.
+`allows` is added, the log functions move to an internal module, and the
+formatter handles `{Format, Args}` messages and non-list reports.
 
 ## License
 

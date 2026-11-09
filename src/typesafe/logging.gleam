@@ -28,30 +28,6 @@ type DoNotLeak
 @external(erlang, "typesafe_logging_ffi", "configure")
 pub fn configure() -> Nil
 
-/// Log a message to the Erlang logger at the given log level.
-///
-pub fn log(level: LogLevel, message: String) -> Nil {
-  erlang_log(level, message)
-  Nil
-}
-
-/// Whether the logger would output a message at `level` from this package,
-/// to skip building messages nobody will see.
-///
-pub fn allows(level: LogLevel) -> Bool {
-  erlang_allow(level, Typesafe)
-}
-
-@external(erlang, "logger", "log")
-fn erlang_log(level: LogLevel, message: String) -> DoNotLeak
-
-@external(erlang, "logger", "allow")
-fn erlang_allow(level: LogLevel, module: ModuleName) -> Bool
-
-type ModuleName {
-  Typesafe
-}
-
 @external(erlang, "logger", "set_primary_config")
 fn set_primary_config_level(key: Key, level: LogLevel) -> DoNotLeak
 

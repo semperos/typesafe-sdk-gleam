@@ -37,6 +37,7 @@ import typesafe/error.{
   type Error, ApiError, ConnectionError, InvalidConfig, InvalidRequest,
   TimeoutError, UnexpectedResponse,
 }
+import typesafe/internal/log
 import typesafe/logging.{type LogLevel, Debug, Info, Warning}
 import typesafe/question.{type Answer, type Question}
 import typesafe/retry.{type RetryPolicy}
@@ -110,13 +111,14 @@ pub fn new(api_key: String) -> Client {
 
 /// A client configured from `TYPESAFE_API_KEY` (required),
 /// `TYPESAFE_BASE_URL`, and `TYPESAFE_DEFAULT_MODEL`.
-/// Blank values count as unset.
-pub fn from_env() -> Result(Client, Error) {
+/// Blank values count as unset. The only failure is a missing API key, so the
+/// error is a message to show whoever runs the program.
+pub fn from_env() -> Result(Client, String) {
   use api_key <- result.map(
     read_env("TYPESAFE_API_KEY")
-    |> option.to_result(InvalidConfig(
+    |> option.to_result(
       "No API key was provided. Pass one to `new` or set the TYPESAFE_API_KEY environment variable.",
-    )),
+    ),
   )
   let client = new(api_key)
   let client = case read_env("TYPESAFE_BASE_URL") {
@@ -554,8 +556,8 @@ fn send_attempt(
 /// level shows them. `Info` adds one summary line per response. `Debug` adds
 /// request headers, with credentials redacted, and bodies, unredacted.
 fn log_lazy(level: LogLevel, message: fn() -> String) -> Nil {
-  case logging.allows(level) {
-    True -> logging.log(level, "[typesafe-sdk] " <> message())
+  case log.allows(level) {
+    True -> log.log(level, "[typesafe-sdk] " <> message())
     False -> Nil
   }
 }

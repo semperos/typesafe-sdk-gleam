@@ -3,6 +3,7 @@ import gleam/dict
 import gleam/http
 import gleam/http/request.{type Request}
 import gleam/http/response
+import gleam/json
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
@@ -15,9 +16,7 @@ import typesafe.{
 import typesafe/content.{
   Array, Asset, Bool, Embed, Float, Int, Literal, Null, Object, String, Text,
 }
-import typesafe/error.{
-  ConnectionError, InvalidConfig, InvalidRequest, UnexpectedResponse,
-}
+import typesafe/error.{ConnectionError, InvalidRequest, UnexpectedResponse}
 import typesafe/question.{
   Box, BoxAnswer, BoxCoordinates, Choice, ChoiceAnswer, Noul, NoulAnswer, Score,
   ScoreAnswer,
@@ -140,9 +139,9 @@ pub fn blank_environment_values_count_as_unset_test() {
 pub fn from_env_requires_an_api_key_test() {
   use <- with_env([#("TYPESAFE_API_KEY", " ")])
   assert typesafe.from_env()
-    == Error(InvalidConfig(
+    == Error(
       "No API key was provided. Pass one to `new` or set the TYPESAFE_API_KEY environment variable.",
-    ))
+    )
 }
 
 pub fn strips_trailing_slashes_from_the_base_url_test() {
@@ -452,6 +451,47 @@ pub fn decodes_box_answers_with_and_without_confidence_test() {
       #("a", BoxAnswer(BoxCoordinates(0.1, 0.9, 0.0, 1.0), Some(0.7))),
       #("b", BoxAnswer(BoxCoordinates(0.1, 0.9, 0.0, 1.0), None)),
     ])
+}
+
+pub fn writes_answers_in_the_wire_format_test() {
+  assert json.to_string(question.answer_to_json(NoulAnswer(0.25)))
+    == "{\"type\":\"noul\",\"noul\":0.25}"
+  assert json.to_string(
+      question.answer_to_json(BoxAnswer(
+        BoxCoordinates(0.1, 0.9, 0.0, 1.0),
+        None,
+      )),
+    )
+    == "{\"type\":\"box\",\"box\":{\"top\":0.1,\"bottom\":0.9,\"left\":0.0,\"right\":1.0},\"confidence\":null}"
+}
+
+pub fn reads_back_every_answer_it_writes_test() {
+  let written = [
+    NoulAnswer(0.25),
+    ChoiceAnswer("calm", 0.8, dict.from_list([#("calm", 0.8), #("angry", 0.2)])),
+    ScoreAnswer(
+      1.5,
+      1.0,
+      dict.from_list([
+        #(0, Null),
+        #(1, String("Mid")),
+        #(2, Object([#("k", Array([Bool(True), Int(3), Float(0.5)]))])),
+      ]),
+      dict.from_list([#(0, 0.0), #(1, 0.5), #(2, 0.5)]),
+    ),
+    BoxAnswer(BoxCoordinates(0.1, 0.9, 0.0, 1.0), Some(0.7)),
+    BoxAnswer(BoxCoordinates(0.1, 0.9, 0.0, 1.0), None),
+  ]
+  assert list.map(written, fn(answer) {
+      question.answer_to_json(answer)
+      |> json.to_string
+      |> json.parse(question.answer_decoder())
+    })
+    == list.map(written, Ok)
+}
+
+pub fn reports_the_version_in_gleam_toml_test() {
+  assert typesafe.version == helpers.package_version()
 }
 
 // ---------------------------------------------------------------------------
